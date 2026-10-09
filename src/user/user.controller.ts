@@ -1,34 +1,115 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 
-@Controller('user')
+@Controller('users') //route group
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+  ) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  @Post('/add')
+  async create(
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    try {
+      await this.userService.create(
+        createUserDto,
+      );
+
+      return {
+        success: true,
+        message: 'User Created Successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
+  @Get('getAll')
+  async findAll() {
+    try {
+      const data =
+        await this.userService.findAll();
+      return {
+        success: true,
+        data,
+        message: 'User Fetched Successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const data = await this.userService.findOne(
+        +id,
+      );
+      return {
+        success: true,
+        data,
+        message: 'User Fetched Successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    try {
+      await this.userService.update(
+        +id,
+        updateUserDto,
+      );
+      return {
+        success: true,
+        message: 'User Updated Successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  async remove(@Param('id') id: string) {
+    try {
+      await this.userService.remove(+id);
+      return {
+        success: true,
+        message: 'User Deleted Successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 }

@@ -1,26 +1,64 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserEntity } from './entities/user.entity.js';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+  ) {}
+
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<UserEntity> {
+    const userData =
+      await this.userRepository.create(
+        createUserDto,
+      );
+    return this.userRepository.save(userData);
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(): Promise<UserEntity[]> {
+    return await this.userRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number): Promise<UserEntity> {
+    const userData =
+      await this.userRepository.findOneBy({ id });
+    if (!userData) {
+      throw new HttpException(
+        'User Not Found',
+        404,
+      );
+    }
+    return userData;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserEntity> {
+    const existingUser = await this.findOne(id);
+    const userData = this.userRepository.merge(
+      existingUser,
+      updateUserDto,
+    );
+    return await this.userRepository.save(
+      userData,
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number): Promise<UserEntity> {
+    const existingUser = await this.findOne(id);
+    return await this.userRepository.remove(
+      existingUser,
+    );
   }
 }
