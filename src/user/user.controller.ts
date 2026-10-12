@@ -10,6 +10,7 @@ import {
 import { UserService } from './user.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { stat } from 'fs';
 
 @Controller('users') //route group
 export class UserController {
@@ -22,13 +23,24 @@ export class UserController {
     @Body() createUserDto: CreateUserDto,
   ) {
     try {
-      await this.userService.create(
+      const user = await this.userService.create(
         createUserDto,
       );
 
+      console.log('User Created:', user);
+      // id: 3,
+      // fullName: 'Ignatius Dillwyn',
+      // email: 'ignadillwyn@gmail.com',
+      // password: 'Ultraman2!',
+      // todolists: undefined
       return {
-        success: true,
+        status: 201,
         message: 'User Created Successfully',
+        data: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+        },
       };
     } catch (error) {
       return {
@@ -75,7 +87,7 @@ export class UserController {
     }
   }
 
-  @Patch(':id')
+  @Post('/update/:id')
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
