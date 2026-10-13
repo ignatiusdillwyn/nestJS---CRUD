@@ -4,6 +4,7 @@ import { AppService } from './app.service.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module.js';
 import { TodolistModule } from './todolist/todolist.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { TodolistModule } from './todolist/todolist.module.js';
     }),
     UserModule,
     TodolistModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

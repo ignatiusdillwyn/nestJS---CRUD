@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Todolist } from './entities/todolist.entity.js';
 import { UserEntity } from '../user/entities/user.entity.js';
 import { CreateTodolistDto } from './dto/create-todolist.dto.js';
 import { UpdateTodolistDto } from './dto/update-todolist.dto.js';
+import * as currentUserDecoratorJs from '../auth/decorators/current-user.decorator.js';
+import { JwtUser } from '../auth/decorators/current-user.decorator.js';
 
 @Injectable()
 export class TodolistService {
@@ -14,22 +16,25 @@ export class TodolistService {
 
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
-  ) {}
+  ) { }
 
   // ✅ CREATE
-  async create(createTodolistDto: CreateTodolistDto) {
-    const { description, userId } = createTodolistDto;
+  async create(createTodolistDto: CreateTodolistDto, currentUser: JwtUser) {
+    const { description } = createTodolistDto;
+    const userId = currentUser.userId;   // ✅ dari token, bukan dari body
 
-    // Pastikan user-nya ada
-    const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) {
+    console.log('User dari token:', currentUser);
+
+    // Pastikan user-nya ada di database
+    const userData = await this.userRepo.findOneBy({ id: userId });
+    if (!userData) {   // ✅ cek userData, BUKAN user
       throw new NotFoundException(`User dengan id ${userId} tidak ditemukan`);
     }
 
     const todo = this.todolistRepo.create({
       description,
-      user,
-      userId,              // isi FK langsung
+      user: userData,      // ✅ dari DB
+      userId,              // ✅ FK terisi dari token
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -67,23 +72,25 @@ export class TodolistService {
   }
 
   // ✅ UPDATE
-  async update(id: number, updateTodolistDto: UpdateTodolistDto) {
+  async update(
+    id: number,
+    updateTodolistDto: UpdateTodolistDto,
+    currentUser: JwtUser,
+  ) {
     const todo = await this.findOne(id);
 
-    // Kalau userId diubah, pastikan user barunya ada
-    if (updateTodolistDto.userId && updateTodolistDto.userId !== todo.userId) {
-      const user = await this.userRepo.findOneBy({
-        id: updateTodolistDto.userId,
-      });
-      if (!user) {
-        throw new NotFoundException(
-          `User dengan id ${updateTodolistDto.userId} tidak ditemukan`,
-        );
-      }
-      todo.user = user;
+    // ✅ Pastikan todolist ini milik user yang login
+    if (todo.userId !== currentUser.userId) {
+      throw new ForbiddenException(
+        'Anda tidak berhak mengubah todolist ini',
+      );
     }
 
-    Object.assign(todo, updateTodolistDto);
+    // ✅ Hanya boleh ubah field yang diizinkan (description)
+    if (updateTodolistDto.description !== undefined) {
+      todo.description = updateTodolistDto.description;
+    }
+
     todo.updated_at = new Date();
 
     return this.todolistRepo.save(todo);

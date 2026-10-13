@@ -28,11 +28,7 @@ export class UserController {
       );
 
       console.log('User Created:', user);
-      // id: 3,
-      // fullName: 'Ignatius Dillwyn',
-      // email: 'ignadillwyn@gmail.com',
-      // password: 'Ultraman2!',
-      // todolists: undefined
+     
       return {
         status: 201,
         message: 'User Created Successfully',

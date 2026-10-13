@@ -5,7 +5,7 @@ export class CreateTodolistDto {
   @IsString()
   description: string;
 
-  @IsNotEmpty()
-  @IsInt()
-  userId: number;
+  // @IsNotEmpty()
+  // @IsInt()
+  // userId: number;
 }
